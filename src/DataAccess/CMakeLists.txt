@@ -1,0 +1,10 @@
+add_library(DataLayer
+            Repositories/StockRepository.h 
+            Repositories/StockRepository.cpp
+            Repositories/UserRepository.h 
+            Repositories/UserRepository.cpp 
+            User.h
+            User.cpp
+            Stock.h 
+            Stock.cpp
+)
