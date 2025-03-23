@@ -9,6 +9,9 @@
 Server::Server(pointer<UserService>& user_service, pointer<StockService>& stock_service): 
         user_service_(user_service), stock_service_(stock_service){ }
 
+Server::Server(const Server &other):
+    user_service_(other.user_service_), stock_service_(other.stock_service_){}
+
 void Server::operator=(const Server &other){
     if (this == &other) {
         return;
@@ -18,12 +21,12 @@ void Server::operator=(const Server &other){
     stock_service_ = other.stock_service_;
 }
 
-std::future<std::vector<Stock>> Server::ListStocks()
-{
+std::future<std::vector<Stock>> Server::ListStocks() {
     std::future<std::vector<Stock>> f = boost::asio::post(pool_, 
         std::packaged_task<std::vector<Stock>()>(  
             [server = shared_from_this()](){
                 auto result = server->stock_service_->ListStocks();
+                std::this_thread::sleep_for(std::chrono::seconds(5));
                 return result;
             }
     ));

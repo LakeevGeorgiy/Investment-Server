@@ -2,8 +2,11 @@
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
-#include <memory>
 #include <iostream>
+#include <memory>
+#include <nlohmann/json.hpp>
+
+#include "Server.h"
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;
@@ -14,12 +17,13 @@ private:
 
     beast::tcp_stream stream_;
     beast::flat_buffer buffer_;
+    std::shared_ptr<Server> server_;
     std::shared_ptr<const std::string> doc_root_;
     http::request<http::string_body> req_;
 
 public:
 
-    Session(asio::ip::tcp::socket socket, std::shared_ptr<const std::string>& doc_root);
+    Session(asio::ip::tcp::socket socket, std::shared_ptr<Server>& server, std::shared_ptr<const std::string>& doc_root);
 
     void Run();
 
@@ -34,4 +38,13 @@ private:
 };
 
 http::message_generator HandleRequest(
-    beast::string_view doc_root, http::request<http::string_body> &&req);
+    beast::string_view doc_root, 
+    http::request<http::string_body> &&req, 
+    std::shared_ptr<Server>& server
+);
+
+void to_json(nlohmann::json& j, const Stock& stock);
+void from_json(nlohmann::json& j, Stock& stock);
+
+void to_json(nlohmann::json& j, const User& stock);
+void from_json(nlohmann::json& j, User& stock);

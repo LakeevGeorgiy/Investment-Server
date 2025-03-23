@@ -4,10 +4,12 @@ Listener::Listener
 (
     asio::io_context &context
     , ip::tcp::endpoint endpoint
+    , std::shared_ptr<Server>& server
     , std::shared_ptr<const std::string> &doc_root
 ) : 
     context_(context)
     , acceptor_(asio::make_strand(context))
+    , server_(server)
     , doc_root_(doc_root)
 {
 
@@ -47,7 +49,7 @@ void Listener::OnAccept(beast::error_code ec, ip::tcp::socket socket){
     if (ec) {
         std::cerr << ec.message() << "\n";
     } else {
-        std::make_shared<Session>(std::move(socket), doc_root_)->Run();
+        std::make_shared<Session>(std::move(socket), server_, doc_root_)->Run();
     }
 
     DoAccept();

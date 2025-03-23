@@ -3,8 +3,7 @@
 #include <algorithm>
 #include <iterator>
 
-#include "src/Presentation/Server.h"
-#include "src/Presentation/Listener.h"
+#include "src/Presentation/TcpServer.h"
 
 namespace asio = boost::asio;
 
@@ -21,15 +20,12 @@ int main() {
     auto server = std::make_shared<Server>(user_service, stock_service);
 
     const auto address = asio::ip::tcp::v4();
-    const uint16_t port = 8080;
-    auto doc_root = std::make_shared<const std::string>("/server");
-    auto endpoint = asio::ip::tcp::endpoint(address, port);
-
-    std::cout << "endpoint: " << endpoint << "\n";
-
     asio::io_context ctx(1);
-    std::make_shared<Listener>(ctx, endpoint, doc_root)->Run();
-    ctx.run();
+    TcpServer tcpServer(ctx, server);
+    
+    tcpServer.Run(address, 8080);
+    // std::make_shared<Listener>(ctx, endpoint, doc_root)->Run();
+    // ctx.run();
 
     // for (int i = 0; i < 2; ++i) {
     //     auto result = server->ListStocks();

@@ -21,7 +21,7 @@ private:
 public:
 
     Server(pointer<UserService>& user_service, pointer<StockService>& stock_service);
-    Server(const Server& other) = delete;
+    Server(const Server& other);
     void operator=(const Server& other);
 
     std::future<std::vector<Stock>> ListStocks();
