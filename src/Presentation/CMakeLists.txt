@@ -4,6 +4,10 @@ project(PresentationLayer)
 add_library(${PROJECT_NAME} 
             Server.h 
             Server.cpp
+            Session.h 
+            Session.cpp
+            Listener.h 
+            Listener.cpp
 )
 
 find_package(Boost REQUIRED)
