@@ -27,6 +27,12 @@ public:
 
     void Run();
 
+    void ListStocksCallback(std::vector<Stock>& stocks);
+    void BuyStocksCallback(uint64_t user_id, uint64_t stock_id, uint32_t count);
+    void SellStocksCallback(uint64_t user_id, uint64_t stock_id, uint32_t count);
+    void RegisterCallback(User& user);
+    void ChangePasswordCallback(uint64_t user_id);
+    void ListUserStocksCallback(std::vector<Stock>& stocks);
 private:
 
     void DoRead();
@@ -35,13 +41,13 @@ private:
     void OnWrite(bool keep_alive, beast::error_code ec, std::size_t bytes_transferred);
     void DoClose();
 
+    void HandleRequest(
+        beast::string_view doc_root, 
+        http::request<http::string_body> &&req, 
+        std::shared_ptr<Server>& server
+    );
 };
 
-http::message_generator HandleRequest(
-    beast::string_view doc_root, 
-    http::request<http::string_body> &&req, 
-    std::shared_ptr<Server>& server
-);
 
 void to_json(nlohmann::json& j, const Stock& stock);
 void from_json(nlohmann::json& j, Stock& stock);

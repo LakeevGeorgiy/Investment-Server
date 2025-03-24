@@ -33,7 +33,7 @@ void Session::OnRead(beast::error_code ec, std::size_t bytes_transfered) {
         return DoClose();
     }
 
-    SendResponse(HandleRequest(*doc_root_, std::move(req_), server_));
+    HandleRequest(*doc_root_, std::move(req_), server_);
 }
 
 void Session::SendResponse(http::message_generator &&msg){
@@ -63,7 +63,93 @@ void Session::DoClose(){
     std::cout << "connection is close\n";
 }
 
-http::message_generator HandleRequest(
+void Session::ListStocksCallback(std::vector<Stock>& stocks) {
+    http::response<http::string_body> response;
+    nlohmann::json json_response(stocks);
+
+    response.result(http::status::ok);
+    response.version(11);
+    response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    response.set(http::field::content_type, "application/json");
+    response.body() = json_response.dump();
+    response.prepare_payload();
+
+    http::message_generator generator(std::move(response));
+    SendResponse(std::move(generator));
+}
+
+void Session::BuyStocksCallback(uint64_t user_id, uint64_t stock_id, uint32_t count) {
+    std::string msg = "User: " + std::to_string(user_id) + " buy stock"
+         + std::to_string(stock_id) + " count: " + std::to_string(count);
+
+    http::response<http::string_body> response;
+    response.result(http::status::ok);
+    response.version(11);
+    response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    response.body() = msg;
+    response.prepare_payload();
+
+    http::message_generator generator(std::move(response));
+    SendResponse(std::move(generator));
+}
+
+void Session::SellStocksCallback(uint64_t user_id, uint64_t stock_id, uint32_t count) {
+    std::string msg = "User: " + std::to_string(user_id) + " sell stock"
+         + std::to_string(stock_id) + " count: " + std::to_string(count);
+
+    http::response<http::string_body> response;
+    response.result(http::status::ok);
+    response.version(11);
+    response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    response.body() = msg;
+    response.prepare_payload();
+
+    http::message_generator generator(std::move(response));
+    SendResponse(std::move(generator));
+}
+
+void Session::RegisterCallback(User& user) {
+    std::string msg = "Create user: " + user.name_;
+    http::response<http::string_body> response;
+    response.result(http::status::ok);
+    response.version(11);
+    response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    response.body() = msg;
+    response.prepare_payload();
+
+    http::message_generator generator(std::move(response));
+    SendResponse(std::move(generator));
+}
+
+void Session::ChangePasswordCallback(uint64_t user_id) {
+    std::string msg = "Password for user: " + std::to_string(user_id) + " was updated";
+    http::response<http::string_body> response;
+    response.result(http::status::ok);
+    response.version(11);
+    response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    response.body() = msg;
+    response.prepare_payload();
+
+    http::message_generator generator(std::move(response));
+    SendResponse(std::move(generator));
+}
+
+void Session::ListUserStocksCallback(std::vector<Stock>& stocks) {
+    http::response<http::string_body> response;
+    nlohmann::json json_response(stocks);
+
+    response.result(http::status::ok);
+    response.version(11);
+    response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    response.set(http::field::content_type, "application/json");
+    response.body() = json_response.dump();
+    response.prepare_payload();
+
+    http::message_generator generator(std::move(response));
+    SendResponse(std::move(generator));
+}
+
+void Session::HandleRequest(
     beast::string_view doc_root
     , http::request<http::string_body>&& req
     , std::shared_ptr<Server>& server)
@@ -74,32 +160,76 @@ http::message_generator HandleRequest(
 
     if (req.target() == "/api/list_all_stocks" && req.method() == http::verb::get) {
 
-        auto future_stocks = server->ListStocks();
-        future_stocks.wait();
-        auto stocks = future_stocks.get();
-        nlohmann::json json_response(stocks);
-        response.result(http::status::ok);
-        response.version(11);
-        response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-        response.set(http::field::content_type, "application/json");
-        response.body() = json_response.dump();
-        response.prepare_payload();
+        std::function<void(std::vector<Stock>&)> callback = [session = shared_from_this()](std::vector<Stock>& stocks) {
+            session->ListStocksCallback(stocks);
+        };
+        server->ListStocks(callback);
+
     } else if (req.target() == "/api/buy_stocks" && req.method() == http::verb::post){
+        
         auto json_request = nlohmann::json::parse(req.body());
-        std::string response_message = json_request.dump();
-        std::cout << "request_message: " << json_request << "\n";
-        response.result(http::status::ok);
-        response.version(11);
-        response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-        response.set(http::field::content_type, "text/html");
-        response.body() = response_message;
-        response.prepare_payload();
+        uint64_t user_id = json_request["user_id"];
+        uint64_t stock_id = json_request["stock_id"];
+        uint32_t count = json_request["count"];
+        
+        std::function<void()> callback = [user_id, stock_id, count, session = shared_from_this()]() {
+            session->BuyStocksCallback(user_id, stock_id, count);
+        };
+
+        server->BuyStocks(user_id, stock_id, count, callback);
+
+    } else if (req.target() == "/api/sell_stocks" && req.method() == http::verb::post){
+        
+        auto json_request = nlohmann::json::parse(req.body());
+        uint64_t user_id = json_request["user_id"];
+        uint64_t stock_id = json_request["stock_id"];
+        uint32_t count = json_request["count"];
+        
+        std::function<void()> callback = [user_id, stock_id, count, session = shared_from_this()]() {
+            session->SellStocksCallback(user_id, stock_id, count);
+        };
+
+        server->SellStocks(user_id, stock_id, count, callback);
+
+    } else if (req.target() == "/api/register" && req.method() == http::verb::post){
+        
+        auto json = nlohmann::json::parse(req.body());
+        User user(json["id"], json["name"], json["password"]);
+        
+        std::function<void()> callback = [&user, session = shared_from_this()]() {
+            session->RegisterCallback(user);
+        };
+
+        server->Register(user, callback);
+
+    } else if (req.target() == "/api/change_password" && req.method() == http::verb::post){
+        
+        auto json_request = nlohmann::json::parse(req.body());
+        uint64_t user_id = json_request["user_id"];
+        std::string password = json_request["password"];
+        
+        std::function<void()> callback = [user_id, session = shared_from_this()]() {
+            session->ChangePasswordCallback(user_id);
+        };
+
+        server->ChangePassword(user_id, password, callback);
+
+    } else if (req.target() == "/api/list_user_stock" && req.method() == http::verb::get){
+        
+        auto json_request = nlohmann::json::parse(req.body());
+        uint64_t user_id = json_request["user_id"];
+        
+        std::function<void(std::vector<Stock>&)> callback = [session = shared_from_this()](std::vector<Stock>& stocks) {
+            session->ListUserStocksCallback(stocks);
+        };
+
+        server->ListUsersStock(user_id, callback);
+
     } else {
         response.result(http::status::not_found);
         response.prepare_payload();
     }
 
-    return response;
 }
 
 void to_json(nlohmann::json &j, const Stock &stock){

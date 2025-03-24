@@ -24,12 +24,12 @@ public:
     Server(const Server& other);
     void operator=(const Server& other);
 
-    std::future<std::vector<Stock>> ListStocks();
-    std::future<void> BuyStocks(uint64_t user_id, uint64_t stock_id, uint32_t count);
-    std::future<void> SellStocks(uint64_t user_id, uint64_t stock_id, uint32_t count);
-    std::future<void> Register(const User& user);
-    std::future<void> ChangePassword(uint64_t user_id, const std::string& password);
-    std::future<std::vector<Stock>> ListUsersStock(uint64_t user_id);
+    void ListStocks(std::function<void(std::vector<Stock>&)>& callback);
+    void BuyStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, std::function<void()>& callback);
+    void SellStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, std::function<void()>& callback);
+    void Register(User& user, std::function<void()>& callback);
+    void ChangePassword(uint64_t user_id, const std::string& password, std::function<void()>& callback);
+    void ListUsersStock(uint64_t user_id, std::function<void(std::vector<Stock>&)>& callback);
     void Wait();
     void Join();
     void Stop();
