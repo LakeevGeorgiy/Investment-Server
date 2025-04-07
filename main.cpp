@@ -23,11 +23,11 @@ void InsertStocks(std::shared_ptr<StockRepository>& stock_repository_) {
 
 void InsertUsers(std::shared_ptr<UserRepository>& user_repository_) {
     auto users_ = std::vector<User>{
-        User(1, "Georgiy", "123"),
-        User(2, "Vlad", "456"),
-        User(3, "Andrew", "789"),
-        User(4, "Achmed", "1011"),
-        User(5, "Khabib", "1213")
+        User(1, "Georgiy", "123", 1000000),
+        User(2, "Vlad", "456", 1000000),
+        User(3, "Andrew", "789", 1000000),
+        User(4, "Achmed", "1011", 10000000),
+        User(5, "Khabib", "1213", 1)
     };
 
     users_[0].stocks_[1] += 100;

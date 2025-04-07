@@ -27,6 +27,7 @@ User UserRepository::CreateUser(const User &user)
     std::unique_lock lock(mutex_);
     auto ptr = std::shared_ptr<User>(new User(user));
     ptr->id_ = counter_;
+    ptr->balance_ = user.balance_;
     users_[counter_++] = ptr;
     return *ptr;
 }
@@ -67,7 +68,7 @@ User UserRepository::GetUserByLogin(const std::string &username){
             return *cur_user;
         }
     }
-    return User(0, "", "");
+    return User(0, "", "",0);
 }
 
 void UserRepository::UpdateUser(const User &updated_user)
@@ -76,6 +77,7 @@ void UserRepository::UpdateUser(const User &updated_user)
     auto user = users_[updated_user.id_];
     user->name_ = updated_user.name_;
     user->password_ = updated_user.password_;
+    user->balance_ = updated_user.balance_;
     user->stocks_ = updated_user.stocks_;
 }
 

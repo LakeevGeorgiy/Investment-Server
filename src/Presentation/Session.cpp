@@ -78,27 +78,30 @@ void Session::ListStocksCallback(std::vector<Stock>& stocks) {
     SendResponse(std::move(generator));
 }
 
-void Session::BuyStocksCallback(uint64_t user_id, uint64_t stock_id, uint32_t count, ResultType<void>& result) {
+void Session::BuyStocksCallback(ResultType<uint64_t>& result) {
 
     if (!result.IsSuccess()) {
         BadRequestCallback(result.GetError()->what());
         return;
     }
-    std::string msg = "User: " + std::to_string(user_id) + " buy stock"
-         + std::to_string(stock_id) + " count: " + std::to_string(count);
 
     http::response<http::string_body> response;
-    response.result(http::status::ok);
     response.version(11);
     response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-    response.body() = msg;
+    auto balance = result.GetResult();
+    nlohmann::json json_response{
+        {"balance", balance}
+    };
+    response.result(http::status::ok);
+    response.set(http::field::content_type, "application/json");
+    response.body() = json_response.dump();
     response.prepare_payload();
 
     http::message_generator generator(std::move(response));
     SendResponse(std::move(generator));
 }
 
-void Session::SellStocksCallback(uint64_t user_id, uint64_t stock_id, uint32_t count, ResultType<void>& result) {
+void Session::SellStocksCallback(ResultType<uint64_t>& result) {
 
     if (!result.IsSuccess()) {
         BadRequestCallback(result.GetError()->what());
@@ -106,14 +109,15 @@ void Session::SellStocksCallback(uint64_t user_id, uint64_t stock_id, uint32_t c
     }
 
     http::response<http::string_body> response;
-    std::string msg = "User: " + std::to_string(user_id) + " sell stock"
-         + std::to_string(stock_id) + " count: " + std::to_string(count);
-
-    response.result(http::status::ok);
     response.version(11);
     response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-    response.set(http::field::content_type, "text/html");
-    response.body() = msg;
+    auto balance = result.GetResult();
+    nlohmann::json json_response{
+        {"balance", balance}
+    };
+    response.result(http::status::ok);
+    response.set(http::field::content_type, "application/json");
+    response.body() = json_response.dump();
     response.prepare_payload();
 
     http::message_generator generator(std::move(response));
@@ -238,8 +242,8 @@ void Session::HandleRequest(
         uint64_t stock_id = json_request["stock_id"];
         uint32_t count = json_request["count"];
         
-        std::function<void(ResultType<void>&)> callback = [user_id, stock_id, count, session = shared_from_this()](ResultType<void>& result) {
-            session->BuyStocksCallback(user_id, stock_id, count, result);
+        std::function<void(ResultType<uint64_t>&)> callback = [session = shared_from_this()](ResultType<uint64_t>& result) {
+            session->BuyStocksCallback(result);
         };
 
         server->BuyStocks(user_id, stock_id, count, callback);
@@ -251,8 +255,8 @@ void Session::HandleRequest(
         uint64_t stock_id = json_request["stock_id"];
         uint32_t count = json_request["count"];
         
-        std::function<void(ResultType<void>&)> callback = [user_id, stock_id, count, session = shared_from_this()](ResultType<void>& result) {
-            session->SellStocksCallback(user_id, stock_id, count, result);
+        std::function<void(ResultType<uint64_t>&)> callback = [session = shared_from_this()](ResultType<uint64_t>& result) {
+            session->SellStocksCallback(result);
         };
 
         server->SellStocks(user_id, stock_id, count, callback);
@@ -260,7 +264,7 @@ void Session::HandleRequest(
     } else if (req.target() == "/api/register" && req.method() == http::verb::post){
         
         auto json = nlohmann::json::parse(req.body());
-        User user(0, json["name"], json["password"]);
+        User user(0, json["name"], json["password"], 0);
         
         std::function<void(ResultType<User>&)> callback = [session = shared_from_this()](ResultType<User>& result) {
             session->RegisterCallback(result);
@@ -272,7 +276,7 @@ void Session::HandleRequest(
         
         std::cout << "Try to login user\n";
         auto json = nlohmann::json::parse(req.body());
-        User user(0, json["name"], json["password"]);
+        User user(0, json["name"], json["password"], 0);
         
         std::function<void(ResultType<User>&)> callback = [session = shared_from_this()](ResultType<User>& result) {
             session->LoginCallback(result);
@@ -339,6 +343,7 @@ void to_json(nlohmann::json &j, const User &user){
         {"id", user.id_},
         {"name", user.name_},
         {"password", user.password_},
+        {"balance", user.balance_},
         {"stocks", user.stocks_},
     };
 }
@@ -347,5 +352,6 @@ void from_json(nlohmann::json &j, User &user){
     j.at("id").get_to(user.id_);
     j.at("name").get_to(user.name_);
     j.at("password").get_to(user.password_);
+    j.at("balance").get_to(user.balance_),
     j.at("stocks").get_to(user.stocks_);
 }

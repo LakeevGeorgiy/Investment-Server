@@ -28,8 +28,8 @@ public:
     void Run();
 
     void ListStocksCallback(std::vector<Stock>& stocks);
-    void BuyStocksCallback(uint64_t user_id, uint64_t stock_id, uint32_t count, ResultType<void>& result);
-    void SellStocksCallback(uint64_t user_id, uint64_t stock_id, uint32_t count, ResultType<void>& result);
+    void BuyStocksCallback(ResultType<uint64_t>& result);
+    void SellStocksCallback(ResultType<uint64_t>& result);
     void RegisterCallback(ResultType<User>& result);
     void LoginCallback(ResultType<User>& result);
     void ChangePasswordCallback(uint64_t user_id);

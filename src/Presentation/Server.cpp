@@ -31,35 +31,78 @@ void Server::ListStocks(std::function<void(std::vector<Stock>&)>& callback) {
 }
 
 void Server::BuyStocks(uint64_t user_id, uint64_t stock_id, uint32_t count,
-                       std::function<void(ResultType<void> &)> &callback)
+                       std::function<void(ResultType<uint64_t> &)> &callback)
 {
 
     boost::asio::post(pool_,
         [callback, server = shared_from_this(), user_id, stock_id, count](){
-            auto result = server->stock_service_->BuyStocks(stock_id, count);
-            if (!result.IsSuccess()) {
-                callback(result);
+            auto result_stock = server->stock_service_->GetStock(stock_id);
+            if (!result_stock.IsSuccess()) {
+                auto error = ResultType<uint64_t>(result_stock.GetError());
+                callback(error);
+                return;
+            }
+            
+            auto cost = result_stock.GetResult().cost_;
+
+            auto result_user = server->user_service_->GetUser(user_id);
+            if (!result_user.IsSuccess()) {
+                auto error = ResultType<uint64_t>(result_user.GetError());
+                callback(error);
                 return;
             }
 
-            result = server->user_service_->BuyStocks(user_id, stock_id, count);
-            callback(result);
+            auto balance = result_user.GetResult().balance_;
+
+            std::cout << "try to buy: " << cost * count << " " << "balance: " << balance << "\n";
+
+            if (balance < cost * count){
+                auto error = ResultType<uint64_t>(
+                    std::make_shared<std::runtime_error>("Not enough balance")
+                );
+                callback(error);
+                return;
+            }
+
+
+            auto result = server->stock_service_->BuyStocks(stock_id, count);
+            if (!result.IsSuccess()) {
+                auto error = ResultType<uint64_t>(
+                    std::make_shared<std::runtime_error>("Not enough balance")
+                );
+                callback(error);
+                return;
+            }
+
+            auto res = server->user_service_->BuyStocks(user_id, stock_id, count, cost);
+            callback(res);
         }
     );
 }
 
 void Server::SellStocks(uint64_t user_id, uint64_t stock_id, uint32_t count,
-                                    std::function<void(ResultType<void>&)>& callback) {
+                                    std::function<void(ResultType<uint64_t>&)>& callback) {
 
     boost::asio::post(pool_, 
         [callback, server = shared_from_this(), user_id, stock_id, count](){
+
+            auto result_stock = server->stock_service_->GetStock(stock_id);
+            if (!result_stock.IsSuccess()) {
+                auto error = ResultType<uint64_t>(result_stock.GetError());
+                callback(error);
+                return;
+            }
+            
+            auto cost = result_stock.GetResult().cost_;
+
             auto result = server->stock_service_->SellStocks(stock_id, count);
             if (!result.IsSuccess()) {
-                callback(result);
+                auto error = ResultType<uint64_t>(result_stock.GetError());
+                callback(error);
             }
 
-            result = server->user_service_->SellStocks(user_id, stock_id, count);
-            callback(result);
+            auto res = server->user_service_->SellStocks(user_id, stock_id, count, cost);
+            callback(res);
         }
     );
 

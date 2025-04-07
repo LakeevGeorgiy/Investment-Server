@@ -25,8 +25,8 @@ public:
     void operator=(const Server& other);
 
     void ListStocks(std::function<void(std::vector<Stock>&)>& callback);
-    void BuyStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, std::function<void(ResultType<void>&)>& callback);
-    void SellStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, std::function<void(ResultType<void>&)>& callback);
+    void BuyStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, std::function<void(ResultType<uint64_t>&)>& callback);
+    void SellStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, std::function<void(ResultType<uint64_t>&)>& callback);
     void Register(User& user, std::function<void(ResultType<User>&)>& callback);
     void Login(User& user, std::function<void(ResultType<User>& user)>& callback);
     void ChangePassword(uint64_t user_id, const std::string& password, std::function<void()>& callback);

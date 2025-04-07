@@ -20,36 +20,50 @@ void UserService::operator=(const UserService &other){
     user_repository_ = other.user_repository_;
 }
 
-ResultType<void> UserService::BuyStocks(uint64_t user_id, uint64_t stock_id, uint32_t count){
+ResultType<User> UserService::GetUser(uint64_t user_id){
     if (!user_repository_->FindUser(user_id)) {
-        return ResultType<void>(
+        return ResultType<User>(
             std::make_shared<std::runtime_error>("no such user"));
     }
-    User updated_user = user_repository_->ReadUser(user_id);
-    updated_user.stocks_[stock_id] += count;
-    user_repository_->UpdateUser(updated_user);
-    return ResultType<void>();
+
+    User user = user_repository_->ReadUser(user_id);
+    return ResultType(user);
 }
 
-ResultType<void> UserService::SellStocks(uint64_t user_id, uint64_t stock_id, uint32_t count) {
+ResultType<uint64_t> UserService::BuyStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, uint64_t cost)
+{
+    if (!user_repository_->FindUser(user_id)) {
+        return ResultType<uint64_t>(
+            std::make_shared<std::runtime_error>("no such user"));
+    }
+
+    User updated_user = user_repository_->ReadUser(user_id);
+    updated_user.balance_ -= cost * count;
+    updated_user.stocks_[stock_id] += count;
+    user_repository_->UpdateUser(updated_user);
+    return ResultType(updated_user.balance_);
+}
+
+ResultType<uint64_t> UserService::SellStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, uint64_t cost) {
     User updated_user = user_repository_->ReadUser(user_id);
 
     if (updated_user.stocks_.find(stock_id) == updated_user.stocks_.end()){
-        return ResultType<void>(
+        return ResultType<uint64_t>(
             std::make_shared<std::runtime_error>("user doesn't have such stocks"));
     }
 
     if (updated_user.stocks_[stock_id] < count) {
-        return ResultType<void>(
+        return ResultType<uint64_t>(
             std::make_shared<std::runtime_error>("Try to sell more than have"));
     }
 
+    updated_user.balance_ += cost * count;
     updated_user.stocks_[stock_id] -= count;
     if (updated_user.stocks_[stock_id] == 0) {
         updated_user.stocks_.erase(stock_id);
     }
     user_repository_->UpdateUser(updated_user);
-    return ResultType<void>();
+    return ResultType<uint64_t>(updated_user.balance_);
 }
 
 ResultType<User> UserService::CreateNewUser(const User &user) {
