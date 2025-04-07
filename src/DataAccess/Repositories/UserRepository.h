@@ -24,10 +24,14 @@ public:
     UserRepository(const UserRepository& other);
     void operator=(const UserRepository& other);
 
-    void CreateUser(const User& user);
+    User CreateUser(const User& user);
     std::vector<User> ReadUsers();
     User ReadUser(uint64_t id);
+
     bool FindUser(uint64_t id);
+    bool FindUserByLogin(const std::string& username);
+
+    User GetUserByLogin(const std::string& username);
     void UpdateUser(const User& updated_user);
     void DeleteUser(uint64_t id);
 };

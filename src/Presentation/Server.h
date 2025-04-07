@@ -25,11 +25,13 @@ public:
     void operator=(const Server& other);
 
     void ListStocks(std::function<void(std::vector<Stock>&)>& callback);
-    void BuyStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, std::function<void()>& callback);
-    void SellStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, std::function<void()>& callback);
-    void Register(User& user, std::function<void()>& callback);
+    void BuyStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, std::function<void(ResultType<void>&)>& callback);
+    void SellStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, std::function<void(ResultType<void>&)>& callback);
+    void Register(User& user, std::function<void(ResultType<User>&)>& callback);
+    void Login(User& user, std::function<void(ResultType<User>& user)>& callback);
     void ChangePassword(uint64_t user_id, const std::string& password, std::function<void()>& callback);
-    void ListUsersStock(uint64_t user_id, std::function<void(std::vector<Stock>&)>& callback);
+    void ListUsersStock(uint64_t user_id, std::function<void(ResultType<std::vector<Stock>>)>& callback);
+    void BadRequest(std::function<void()>& callback);
     void Wait();
     void Join();
     void Stop();

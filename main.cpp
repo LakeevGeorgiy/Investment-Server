@@ -30,6 +30,10 @@ void InsertUsers(std::shared_ptr<UserRepository>& user_repository_) {
         User(5, "Khabib", "1213")
     };
 
+    users_[0].stocks_[1] += 100;
+    users_[0].stocks_[2] += 300;
+    users_[0].stocks_[3] += 1000;
+
     for (std::size_t i = 0; i < users_.size(); ++i) {
         user_repository_->CreateUser(users_[i]);
     }

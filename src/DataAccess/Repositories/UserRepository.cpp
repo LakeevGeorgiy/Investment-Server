@@ -22,12 +22,13 @@ void UserRepository::operator=(const UserRepository &other) {
     users_ = other.users_;
 }
 
-void UserRepository::CreateUser(const User &user)
+User UserRepository::CreateUser(const User &user)
 {
     std::unique_lock lock(mutex_);
     auto ptr = std::shared_ptr<User>(new User(user));
     ptr->id_ = counter_;
     users_[counter_++] = ptr;
+    return *ptr;
 }
 
 std::vector<User> UserRepository::ReadUsers()
@@ -49,7 +50,28 @@ bool UserRepository::FindUser(uint64_t id) {
     return users_.find(id) != users_.end();
 }
 
-void UserRepository::UpdateUser(const User &updated_user) {
+bool UserRepository::FindUserByLogin(const std::string &username){
+    std::shared_lock lock(mutex_);
+    for (auto& [id, cur_user] : users_) {
+        if (cur_user->name_ == username) {
+            return true;
+        }
+    }
+    return false;
+}
+
+User UserRepository::GetUserByLogin(const std::string &username){
+    std::shared_lock lock(mutex_);
+    for (auto& [id, cur_user] : users_) {
+        if (cur_user->name_ == username) {
+            return *cur_user;
+        }
+    }
+    return User(0, "", "");
+}
+
+void UserRepository::UpdateUser(const User &updated_user)
+{
     std::unique_lock lock(mutex_);
     auto user = users_[updated_user.id_];
     user->name_ = updated_user.name_;

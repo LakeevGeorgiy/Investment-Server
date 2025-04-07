@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 #include "StockService.h"
 
 StockService::StockService(pointer<StockRepository>& stock_repository): stock_repository_(stock_repository) {}
@@ -23,29 +25,40 @@ std::vector<Stock> StockService::ListStocks(){
 }
 
 
-Stock StockService::GetStock(uint64_t id) {
-    return stock_repository_->ReadStock(id);
+ResultType<Stock> StockService::GetStock(uint64_t id) {
+    if (!stock_repository_->FindStock(id)) {
+        return ResultType<Stock>(
+            std::make_shared<std::runtime_error>("no such stock"));
+    }
+    auto stock = stock_repository_->ReadStock(id);
+    return ResultType<Stock>(stock);
 }
 
-void StockService::BuyStocks(uint64_t stock_id, uint32_t count){
+ResultType<void> StockService::BuyStocks(uint64_t stock_id, uint32_t count){
     if (!stock_repository_->FindStock(stock_id)) {
-        throw std::exception();
+        return ResultType<void>(
+            std::make_shared<std::runtime_error>("no such stocks in exchange glass"));
     }
 
     Stock stock = stock_repository_->ReadStock(stock_id);
     if (stock.count_ < count) {
-        throw std::exception();
+        return ResultType<void>(
+            std::make_shared<std::runtime_error>("you can't buy more than glass have"));
+
     }
     stock.count_ -= count;
     stock_repository_->UpdateStock(stock);
+    return ResultType<void>();
 }
 
-void StockService::SellStocks(uint64_t stock_id, uint32_t count) {
+ResultType<void> StockService::SellStocks(uint64_t stock_id, uint32_t count) {
     if (!stock_repository_->FindStock(stock_id)) {
-        throw std::exception();
+        return ResultType<void>(
+            std::make_shared<std::runtime_error>("Stocks are not found"));
     }
 
     Stock stock = stock_repository_->ReadStock(stock_id);
     stock.count_ += count;
     stock_repository_->UpdateStock(stock);
+    return ResultType<void>();
 }

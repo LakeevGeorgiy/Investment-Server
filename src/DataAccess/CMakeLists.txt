@@ -7,4 +7,5 @@ add_library(DataLayer
             User.cpp
             Stock.h 
             Stock.cpp
+            ResultType.h
 )

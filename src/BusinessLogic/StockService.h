@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include "../DataAccess/ResultType.h"
 #include "../DataAccess/Repositories/StockRepository.h"
 
 class StockService {
@@ -22,7 +23,7 @@ public:
     void operator=(const StockService& other);
 
     std::vector<Stock> ListStocks();
-    Stock GetStock(uint64_t id);
-    void BuyStocks(uint64_t stock_id, uint32_t count);
-    void SellStocks(uint64_t stock_id, uint32_t count);
+    ResultType<Stock> GetStock(uint64_t id);
+    ResultType<void> BuyStocks(uint64_t stock_id, uint32_t count);
+    ResultType<void> SellStocks(uint64_t stock_id, uint32_t count);
 };
