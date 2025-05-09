@@ -8,9 +8,7 @@ Session::Session(
     stream_(std::move(socket))
     , server_(server)
     , doc_root_(doc_root) 
-{
-    std::cout << "new session is created\n";
-}
+{}
 
 void Session::Run() {
     asio::dispatch(stream_.get_executor(), beast::bind_front_handler(
@@ -60,7 +58,6 @@ void Session::OnWrite(bool keep_alive, beast::error_code ec, std::size_t bytes_t
 void Session::DoClose(){
     beast::error_code ec;
     stream_.socket().shutdown(asio::ip::tcp::socket::shutdown_send, ec);
-    std::cout << "connection is close\n";
 }
 
 void Session::ListStocksCallback(std::vector<Stock>& stocks) {
@@ -217,9 +214,7 @@ void Session::HandleRequest(
     , http::request<http::string_body>&& req
     , std::shared_ptr<Server>& server)
 {
-    // std::string path = doc_root + req.target();
     http::response<http::string_body> response;
-    std::cout << "req target: " << req.target() << "\n";
 
     if (req.target() == "/api/list_all_stocks" && req.method() == http::verb::get) {
 
@@ -327,7 +322,8 @@ void to_json(nlohmann::json &j, const Stock &stock){
         {"id", stock.id_},
         {"cost", stock.cost_},
         {"count", stock.count_},
-        {"company_name", stock.company_name_}
+        {"company_name", stock.company_name_},
+        {"image_url", stock.image_url_}
     };
 }
 
@@ -336,6 +332,7 @@ void from_json(nlohmann::json &j, Stock &stock){
     j.at("cost").get_to(stock.cost_);
     j.at("count").get_to(stock.count_);
     j.at("company_name").get_to(stock.company_name_);
+    j.at("image_url").get_to(stock.image_url_);
 }
 
 void to_json(nlohmann::json &j, const User &user){

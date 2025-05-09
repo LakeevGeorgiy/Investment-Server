@@ -1,14 +1,12 @@
 #pragma once
 
-#include <memory>
 #include <shared_mutex>
-#include <vector>
 #include <unordered_map>
-#include <iostream>
+#include <memory>
 
-#include "../Stock.h"
+#include "../../BusinessLogic/Repositories/StockRepositoryInterface.h"
 
-class StockRepository {
+class StockRepository : public StockRepositoryInterface {
 public:
 
     using pointer = std::shared_ptr<Stock>;
@@ -25,10 +23,10 @@ public:
     StockRepository(const StockRepository& other);
     void operator=(const StockRepository& other);
 
-    void CreateStock(const Stock& new_stock);
-    std::vector<Stock> ReadStocks();
-    Stock ReadStock(uint64_t id);
-    bool FindStock(uint64_t id);
-    void UpdateStock(const Stock& updated_stock);
-    void DeleteStock(uint64_t id);
+    void CreateStock(const Stock& new_stock) override;
+    std::vector<Stock> ReadStocks() override;
+    Stock ReadStock(uint64_t id) override;
+    bool FindStock(uint64_t id) override;
+    void UpdateStock(const Stock& updated_stock) override;
+    void DeleteStock(uint64_t id) override;
 };

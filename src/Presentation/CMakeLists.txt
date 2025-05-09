@@ -20,9 +20,6 @@ FetchContent_MakeAvailable(json)
 find_package(Boost REQUIRED)
 
 target_include_directories(${PROJECT_NAME} 
-        PUBLIC 
-            $<INSTALL_INTERFACE:include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PUBLIC
             ${Boost_INCLUDE_DIRS}
 )
@@ -30,6 +27,7 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} 
         PUBLIC 
             BusinessLayer
+            DataLayer
         PUBLIC
             ${Boost_LIBRARIES}
             nlohmann_json::nlohmann_json
@@ -38,4 +36,4 @@ target_link_libraries(${PROJECT_NAME}
 target_link_directories(${PROJECT_NAME} PUBLIC ${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE BusinessLayer)
+target_link_libraries(${PROJECT_NAME} PRIVATE BusinessLayer DataLayer)

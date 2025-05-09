@@ -2,7 +2,7 @@
 
 #include "UserService.h"
 
-UserService::UserService(pointer<UserRepository>& user_repository): user_repository_(user_repository){}
+UserService::UserService(pointer<UserRepositoryInterface>& user_repository): user_repository_(user_repository){}
 
 UserService::UserService(const UserService& other) {
     if (this == &other) {

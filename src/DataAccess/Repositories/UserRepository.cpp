@@ -22,8 +22,7 @@ void UserRepository::operator=(const UserRepository &other) {
     users_ = other.users_;
 }
 
-User UserRepository::CreateUser(const User &user)
-{
+User UserRepository::CreateUser(const User &user){
     std::unique_lock lock(mutex_);
     auto ptr = std::shared_ptr<User>(new User(user));
     ptr->id_ = counter_;
@@ -32,18 +31,17 @@ User UserRepository::CreateUser(const User &user)
     return *ptr;
 }
 
-std::vector<User> UserRepository::ReadUsers()
-{
+std::vector<User> UserRepository::ReadUsers(){
     std::shared_lock lock(mutex_);
     std::vector<User> result;
     for (auto& [key, value] : users_) {
         result.emplace_back(*value.get());
     }
-    return std::move(result);
+    return result;
 }
 
 User UserRepository::ReadUser(uint64_t id) {
-    return std::move(*users_[id].get());
+    return *users_[id].get();
 }
 
 bool UserRepository::FindUser(uint64_t id) {
@@ -71,8 +69,7 @@ User UserRepository::GetUserByLogin(const std::string &username){
     return User(0, "", "",0);
 }
 
-void UserRepository::UpdateUser(const User &updated_user)
-{
+void UserRepository::UpdateUser(const User &updated_user){
     std::unique_lock lock(mutex_);
     auto user = users_[updated_user.id_];
     user->name_ = updated_user.name_;

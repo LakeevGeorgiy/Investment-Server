@@ -3,8 +3,8 @@
 #include <boost/asio/thread_pool.hpp>
 #include <future>
 
-#include "../BusinessLogic/StockService.h"
-#include "../BusinessLogic/UserService.h"
+#include "../BusinessLogic/Services/StockServiceInterface.h"
+#include "../BusinessLogic/Services/UserServiceInterface.h"
 
 class Server : public std::enable_shared_from_this<Server>{
 public:
@@ -15,12 +15,12 @@ public:
 private:
 
     boost::asio::thread_pool pool_;
-    pointer<UserService> user_service_;
-    pointer<StockService> stock_service_;
+    pointer<UserServiceInterface> user_service_;
+    pointer<StockServiceInterface> stock_service_;
 
 public:
 
-    Server(pointer<UserService>& user_service, pointer<StockService>& stock_service);
+    Server(pointer<UserServiceInterface>& user_service, pointer<StockServiceInterface>& stock_service);
     Server(const Server& other);
     void operator=(const Server& other);
 

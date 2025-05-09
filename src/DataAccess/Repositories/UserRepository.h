@@ -1,13 +1,8 @@
 #pragma once
 
-#include <memory>
-#include <shared_mutex>
-#include <unordered_map>
-#include <vector>
+#include "../../BusinessLogic/Repositories/UserRepositoryInterface.h"
 
-#include "../User.h"
-
-class UserRepository {
+class UserRepository : public UserRepositoryInterface {
 public:
 
     using pointer = std::shared_ptr<User>;
@@ -24,14 +19,14 @@ public:
     UserRepository(const UserRepository& other);
     void operator=(const UserRepository& other);
 
-    User CreateUser(const User& user);
-    std::vector<User> ReadUsers();
-    User ReadUser(uint64_t id);
+    User CreateUser(const User& user) override;
+    std::vector<User> ReadUsers() override;
+    User ReadUser(uint64_t id) override;
 
-    bool FindUser(uint64_t id);
-    bool FindUserByLogin(const std::string& username);
+    bool FindUser(uint64_t id) override;
+    bool FindUserByLogin(const std::string& username) override;
 
-    User GetUserByLogin(const std::string& username);
-    void UpdateUser(const User& updated_user);
-    void DeleteUser(uint64_t id);
+    User GetUserByLogin(const std::string& username) override;
+    void UpdateUser(const User& updated_user) override;
+    void DeleteUser(uint64_t id) override;
 };

@@ -2,7 +2,7 @@
 
 #include "StockService.h"
 
-StockService::StockService(pointer<StockRepository>& stock_repository): stock_repository_(stock_repository) {}
+StockService::StockService(pointer<StockRepositoryInterface>& stock_repository): stock_repository_(stock_repository) {}
 
 StockService::StockService(const StockService &other){
     if (this == &other) {

@@ -4,7 +4,7 @@ project(Server)
 set(CMAKE_CXX_STANDARD 23)
 
 add_executable(${PROJECT_NAME} main.cpp)
-# enable_testing()
+enable_testing()
 
 add_subdirectory(src/Presentation)
 add_subdirectory(src/DataAccess)

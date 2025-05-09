@@ -53,6 +53,8 @@ void StockRepository::UpdateStock(const Stock& updated_stock) {
     auto stock = stocks_[updated_stock.id_];
     stock->cost_ = updated_stock.cost_;
     stock->count_ = updated_stock.count_;
+    stock->company_name_ = updated_stock.company_name_;
+    stock->image_url_ = updated_stock.image_url_;
 }
 
 void StockRepository::DeleteStock(uint64_t id) {

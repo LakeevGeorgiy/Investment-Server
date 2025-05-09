@@ -3,10 +3,11 @@
 #include <boost/asio/packaged_task.hpp>
 #include <chrono>
 #include <thread>
+#include <iostream>
 
 #include "Server.h"
 
-Server::Server(pointer<UserService>& user_service, pointer<StockService>& stock_service): 
+Server::Server(pointer<UserServiceInterface>& user_service, pointer<StockServiceInterface>& stock_service): 
         user_service_(user_service), stock_service_(stock_service){ }
 
 Server::Server(const Server &other):
@@ -53,8 +54,6 @@ void Server::BuyStocks(uint64_t user_id, uint64_t stock_id, uint32_t count,
             }
 
             auto balance = result_user.GetResult().balance_;
-
-            std::cout << "try to buy: " << cost * count << " " << "balance: " << balance << "\n";
 
             if (balance < cost * count){
                 auto error = ResultType<uint64_t>(
