@@ -269,7 +269,6 @@ void Session::HandleRequest(
 
     } else if (req.target() == "/api/login_user" && req.method() == http::verb::post){
         
-        std::cout << "Try to login user\n";
         auto json = nlohmann::json::parse(req.body());
         User user(0, json["name"], json["password"], 0);
         
@@ -323,7 +322,6 @@ void to_json(nlohmann::json &j, const Stock &stock){
         {"cost", stock.cost_},
         {"count", stock.count_},
         {"company_name", stock.company_name_},
-        {"image_url", stock.image_url_}
     };
 }
 
@@ -332,7 +330,6 @@ void from_json(nlohmann::json &j, Stock &stock){
     j.at("cost").get_to(stock.cost_);
     j.at("count").get_to(stock.count_);
     j.at("company_name").get_to(stock.company_name_);
-    j.at("image_url").get_to(stock.image_url_);
 }
 
 void to_json(nlohmann::json &j, const User &user){

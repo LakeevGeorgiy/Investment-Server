@@ -10,11 +10,10 @@ public:
     uint32_t cost_;
     uint32_t count_;
     std::string company_name_;
-    std::string image_url_;
 
 public:
 
-    Stock(uint64_t id, uint32_t cost, uint32_t count, std::string company_name, std::string image_url_);
+    Stock(uint64_t id, uint32_t cost, uint32_t count, const std::string& company_name);
 
     Stock(const Stock& other);
 

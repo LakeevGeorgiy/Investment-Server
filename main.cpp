@@ -5,6 +5,7 @@
 
 #include "src/DataAccess/Repositories/StockRepository.h"
 #include "src/DataAccess/Repositories/UserRepository.h"
+#include "src/DataAccess/Repositories/DatabaseConnection.h"
 #include "src/DataAccess/Services/StockService.h"
 #include "src/DataAccess/Services/UserService.h"
 #include "src/Presentation/TcpServer.h"
@@ -13,11 +14,11 @@ namespace asio = boost::asio;
 
 void InsertStocks(std::shared_ptr<StockRepositoryInterface>& stock_repository_) {
     auto stocks_ = std::vector<Stock>{
-        Stock(1, 2000, 1000, "Yandex", "https://www.ecured.cu/images/thumb/0/06/Yandex.png/800px-Yandex.png"),
-        Stock(2, 4500, 10'000, "Google", "https://i.ytimg.com/vi/B8y9lXg5bi0/hqdefault.jpg"),
-        Stock(3, 300, 1'000'000, "Sber", "https://www.renderhub.com/simple3d/sber-logo/sber-logo.jpg"),
-        Stock(4, 54000, 100, "Tesla", "https://klev.club/uploads/posts/2023-11/thumbs/1699089999_klev-club-p-trafareti-znak-tesla-14.jpg"),
-        Stock(5, 320, 10, "Ozon", "https://sun1-95.userapi.com/1aU1WidC53asIS4SCfPB7nJIPBjIECSt0Dejig/c0qaoSKjKRY.jpg")
+        Stock(1, 2000, 1000, "Yandex"),
+        Stock(2, 4500, 10'000, "Google"),
+        Stock(3, 300, 1'000'000, "Sber"),
+        Stock(4, 54000, 100, "Tesla"),
+        Stock(5, 320, 10, "Ozon")
     };
 
     for (std::size_t i = 0; i < stocks_.size(); ++i) {
@@ -44,6 +45,11 @@ void InsertUsers(std::shared_ptr<UserRepositoryInterface>& user_repository_) {
 }
 
 int main() {
+
+    std::string_view connection_string = "postgresql://georgiy:postgres@localhost:5432/investments";
+    auto& database = DatabaseConnection::GetInstance(connection_string);
+    auto result = database->ExecQuery("select id from users where name = $1", pqxx::params{"Georgiy"});
+    std::cout << result[0][0].as<int>() << "\n";
     
     std::shared_ptr<StockRepositoryInterface> stock_repository = std::make_shared<StockRepository>();
     std::shared_ptr<StockServiceInterface> stock_service = std::make_shared<StockService>(stock_repository);
@@ -54,11 +60,6 @@ int main() {
 
     InsertStocks(stock_repository);
     InsertUsers(user_repository);
-    std::cout << user_repository->FindUser(2) << "\n";
-    std::cout << user_service->GetUser(2).GetResult().name_ << "\n";
-    
-    std::cout << stock_repository->FindStock(2) << "\n";
-    std::cout << stock_service->GetStock(2).GetResult().company_name_ << "\n";
 
     const auto address = asio::ip::tcp::v4();
     asio::io_context ctx(1);

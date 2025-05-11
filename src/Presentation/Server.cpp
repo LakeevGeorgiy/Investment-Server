@@ -144,13 +144,11 @@ void Server::ListUsersStock(uint64_t user_id, std::function<void(ResultType<std:
     boost::asio::post(pool_, 
         [callback, server = shared_from_this(), user_id](){
             auto result = server->user_service_->ListUsersStock(user_id);
-            std::cout << "list user stock: before if\n";
             if (!result.IsSuccess()){
                 ResultType<std::vector<Stock>> res(result.GetError());
                 callback(res);
                 return;
             }
-            std::cout << "list user stock: after if\n";
             std::vector<Stock> stocks;
             for (auto& [id, cnt] : result.GetResult()) {
                 auto cur_stock = server->stock_service_->GetStock(id);

@@ -1,0 +1,21 @@
+CREATE EXTENSION pgcrypto;
+
+CREATE TABLE users(
+    id BIGSERIAL NOT NULL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    balance INTEGER NOT NULL
+);
+
+CREATE TABLE stocks(
+    id BIGSERIAL NOT NULL PRIMARY KEY,
+    cost INTEGER NOT NULL,
+    count INTEGER NOT NULL,
+    company VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE users_stocks (
+    userId INTEGER NOT NULL,
+    stockId INTEGER NOT NULL,
+    PRIMARY KEY (userId, stockId)
+);
