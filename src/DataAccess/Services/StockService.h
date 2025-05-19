@@ -7,23 +7,18 @@
 #include "../../BusinessLogic/Services/StockServiceInterface.h"
 
 class StockService : public StockServiceInterface {
-public:
-
-    template <typename T>
-    using pointer = std::shared_ptr<T>;
-
 private:
 
-    pointer<StockRepositoryInterface> stock_repository_;
+    std::shared_ptr<StockRepositoryInterface> repository_;
 
 public:
 
-    StockService(pointer<StockRepositoryInterface>& stock_repository);
-    StockService(const StockService& other);
-    void operator=(const StockService& other);
+    StockService(std::shared_ptr<StockRepositoryInterface>& repository);
+    StockService(const StockService& other) = delete;
+    StockService(StockService&& other);
+    StockService& operator=(const StockService& other) = delete;
+    StockService& operator=(StockService&& other);
 
-    std::vector<Stock> ListStocks() override;
+    ResultType<std::vector<Stock>> ListStocks() override;
     ResultType<Stock> GetStock(uint64_t id) override;
-    ResultType<void> BuyStocks(uint64_t stock_id, uint32_t count) override;
-    ResultType<void> SellStocks(uint64_t stock_id, uint32_t count) override;
 };

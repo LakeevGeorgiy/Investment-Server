@@ -6,17 +6,15 @@
 #include <vector>
 
 #include "../Models/User.h"
+#include "../Models/ResultType.h"
 
 class UserRepositoryInterface {
 public:
 
-    virtual User CreateUser(const User& user) = 0;
-    virtual std::vector<User> ReadUsers() = 0;
-    virtual User ReadUser(uint64_t id) = 0;
-    virtual bool FindUser(uint64_t id) = 0;
-    virtual bool FindUserByLogin(const std::string& username) = 0;
-    virtual User GetUserByLogin(const std::string& username) = 0;
-    virtual void UpdateUser(const User& updated_user) = 0;
-    virtual void DeleteUser(uint64_t id) = 0;
+    virtual ResultType<uint64_t> CreateUser(const User& user) = 0;
+    virtual ResultType<User> ReadUser(uint64_t id) = 0;
+    virtual ResultType<User> LoginUser(std::string_view email, std::string_view password) = 0;
+    virtual ResultType<void> UpdateUser(const User& user) = 0;
+    virtual ResultType<void> DeleteUser(uint64_t id) = 0;
     virtual ~UserRepositoryInterface() = default;
 };

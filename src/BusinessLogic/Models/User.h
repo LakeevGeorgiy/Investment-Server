@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -8,13 +10,13 @@ public:
 
     uint64_t id_;
     std::string name_;
+    std::string email_;
     std::string password_;
     uint64_t balance_;
-    std::unordered_map<uint64_t, uint32_t> stocks_;
 
 public:
 
-    User(uint64_t id, std::string name, std::string password, uint64_t balance);
+    User(uint64_t id, std::string_view name, std::string_view email, std::string_view password, uint64_t balance);
 
     User(const User& other);
 

@@ -1,62 +1,102 @@
 #include <mutex>
+#include <optional>
 
 #include "StockRepository.h"
 
-StockRepository::StockRepository(): counter_(1), mutex_(), stocks_(){}
+StockRepository::StockRepository(std::string_view connection_string)
+    : mutex_()
+    , db_(DatabaseConnection::GetInstance(connection_string))
+{}
 
-StockRepository::StockRepository(const StockRepository &other){
+StockRepository::StockRepository(StockRepository&& other)
+    : db_(other.db_) 
+{}
+
+StockRepository& StockRepository::operator=(StockRepository&& other) {
     if (this == &other) {
-        return;
+        return *this;
+    }
+    db_ = std::move(other.db_);
+    return *this;
+}
+
+ResultType<uint64_t> StockRepository::CreateStock(const Stock& stock) {
+    std::unique_lock lock(mutex_);
+
+    std::string_view query = {R"(
+        INSERT INTO stocks (cost, count, company) 
+        VALUES ($1, $2, $3) 
+        RETURNING id;
+    )"};
+
+    pqxx::params params{stock.cost_, stock.count_, stock.company_name_};
+    auto result = db_->ExecQuery(query, params);
+    uint64_t id = result[0][0].as<uint64_t>();
+    return ResultType<uint64_t>(id);
+}
+
+ResultType<std::vector<Stock>> StockRepository::ReadStocks() {
+    std::unique_lock lock(mutex_);
+
+    std::string_view query = {R"(
+        SELECT id, cost, count, company
+        FROM stocks;
+    )"};
+
+    auto result = db_->ExecQuery(query, pqxx::params{});
+    std::vector<Stock> stocks;
+    for (auto row : result) {
+        std::optional<Stock> stock = pqxx::string_traits<std::optional<Stock>>::from_string(row);
+        if (stock) {
+            stocks.emplace_back(*stock);
+        }
     }
 
-    counter_ = other.counter_;
-    stocks_ = other.stocks_;
+    return ResultType(stocks);
 }
 
-void StockRepository::operator=(const StockRepository &other) {
-    if (this == &other) {
-        return;
+ResultType<Stock> StockRepository::ReadStock(uint64_t id) {
+    std::unique_lock lock(mutex_);
+
+    std::string_view query = {R"(
+        SELECT id, cost, count, company
+        FROM stocks
+        WHERE id = $1;
+    )"};
+
+    pqxx::params params { id };
+    auto result = db_->ExecQuery(query, params);
+    std::optional<Stock> stock = pqxx::string_traits<std::optional<Stock>>::from_string(result[0]);
+    if (stock) {
+        return ResultType(*stock);
     }
-
-    counter_ = other.counter_;
-    stocks_ = other.stocks_;
+    return ResultType<Stock>(
+        std::make_shared<std::runtime_error>("There is not stock with this id")
+    );
 }
 
-void StockRepository::CreateStock(const Stock &new_stock)
-{
+ResultType<void> StockRepository::UpdateStock(const Stock& stock) {
     std::unique_lock lock(mutex_);
-    auto ptr = std::shared_ptr<Stock>(new Stock(new_stock));
-    ptr->id_ = counter_;
-    stocks_[counter_++] = ptr;
+
+    std::string_view query = {R"(
+        UPDATE stocks 
+        SET cost = $1, count = $2, company = $3
+        WHERE id = $4;
+    )"};
+
+    pqxx::params params{ stock.cost_, stock.count_, stock.company_name_};
+    db_->ExecQuery(query, params);
+    return ResultType<void>();
 }
 
-std::vector<Stock> StockRepository::ReadStocks() {
-    std::shared_lock lock(mutex_);
-    std::vector<Stock> result;
-    for (auto& [key, value] : stocks_){
-        result.emplace_back(*value.get());
-    }
-    return result;
-}
-
-Stock StockRepository::ReadStock(uint64_t id) {
-    return *stocks_[id].get();
-}
-
-bool StockRepository::FindStock(uint64_t id){
-    std::shared_lock lock(mutex_);
-    return stocks_.find(id) != stocks_.end();
-}
-
-void StockRepository::UpdateStock(const Stock& updated_stock) {
+ResultType<void> StockRepository::DeleteStock(uint64_t id) {
     std::unique_lock lock(mutex_);
-    auto stock = stocks_[updated_stock.id_];
-    stock->cost_ = updated_stock.cost_;
-    stock->count_ = updated_stock.count_;
-    stock->company_name_ = updated_stock.company_name_;
-}
 
-void StockRepository::DeleteStock(uint64_t id) {
-    std::unique_lock lock(mutex_);
-    stocks_.erase(id);
+    std::string_view query = {R"(
+        DELETE FROM stocks WHERE id = $1;
+    )"};
+
+    pqxx::params params{id};
+    db_->ExecQuery(query, params);
+    return ResultType<void>();
 }

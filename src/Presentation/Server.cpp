@@ -7,11 +7,21 @@
 
 #include "Server.h"
 
-Server::Server(pointer<UserServiceInterface>& user_service, pointer<StockServiceInterface>& stock_service): 
-        user_service_(user_service), stock_service_(stock_service){ }
+Server::Server(
+    pointer<UserServiceInterface>& user_service
+    , pointer<StockServiceInterface>& stock_service
+    , pointer<UserStockServiceInterface>& user_stock_service
+)
+    : user_service_(user_service)
+    , stock_service_(stock_service)
+    , user_stock_service_(user_stock_service)
+{ }
 
-Server::Server(const Server &other):
-    user_service_(other.user_service_), stock_service_(other.stock_service_){}
+Server::Server(const Server &other)
+    : user_service_(other.user_service_)
+    , stock_service_(other.stock_service_)
+    , user_stock_service_(other.user_stock_service_)
+{ }
 
 void Server::operator=(const Server &other){
     if (this == &other) {
@@ -20,9 +30,10 @@ void Server::operator=(const Server &other){
 
     user_service_ = other.user_service_;
     stock_service_ = other.stock_service_;
+    user_stock_service_ = other.user_stock_service_;
 }
 
-void Server::ListStocks(std::function<void(std::vector<Stock>&)>& callback) {
+void Server::ListStocks(std::function<void(ResultType<std::vector<Stock>>&)>& callback) {
     boost::asio::post(pool_, 
         [callback, server = shared_from_this()](){
             auto result = server->stock_service_->ListStocks();
@@ -31,83 +42,63 @@ void Server::ListStocks(std::function<void(std::vector<Stock>&)>& callback) {
     );
 }
 
-void Server::BuyStocks(uint64_t user_id, uint64_t stock_id, uint32_t count,
-                       std::function<void(ResultType<uint64_t> &)> &callback)
+void Server::BuyStocks(uint64_t user_id, const UserStock& user_stock,
+                       std::function<void(ResultType<void> &)> &callback)
 {
 
     boost::asio::post(pool_,
-        [callback, server = shared_from_this(), user_id, stock_id, count](){
-            auto result_stock = server->stock_service_->GetStock(stock_id);
+        [callback, server = shared_from_this(), user_id, user_stock](){
+            auto result_stock = server->stock_service_->GetStock(user_stock.stock_id_);
             if (!result_stock.IsSuccess()) {
-                auto error = ResultType<uint64_t>(result_stock.GetError());
+                auto error = ResultType<void>(result_stock.GetError());
                 callback(error);
                 return;
             }
-            
             auto cost = result_stock.GetResult().cost_;
 
             auto result_user = server->user_service_->GetUser(user_id);
             if (!result_user.IsSuccess()) {
-                auto error = ResultType<uint64_t>(result_user.GetError());
+                auto error = ResultType<void>(result_user.GetError());
                 callback(error);
                 return;
             }
-
-            auto balance = result_user.GetResult().balance_;
-
-            if (balance < cost * count){
-                auto error = ResultType<uint64_t>(
-                    std::make_shared<std::runtime_error>("Not enough balance")
+            auto user = result_user.GetResult();
+            if (user.balance_ < cost) {
+                auto error = ResultType<void>(
+                    std::make_shared<std::runtime_error>("Account has insufficient funds")
                 );
                 callback(error);
                 return;
             }
 
-
-            auto result = server->stock_service_->BuyStocks(stock_id, count);
-            if (!result.IsSuccess()) {
-                auto error = ResultType<uint64_t>(
-                    std::make_shared<std::runtime_error>("Not enough balance")
-                );
-                callback(error);
-                return;
-            }
-
-            auto res = server->user_service_->BuyStocks(user_id, stock_id, count, cost);
-            callback(res);
+            auto result = server->user_stock_service_->UserBuyStock(cost * user_stock.count_, user_id, user_stock);
+            callback(result);
         }
     );
 }
 
-void Server::SellStocks(uint64_t user_id, uint64_t stock_id, uint32_t count,
-                                    std::function<void(ResultType<uint64_t>&)>& callback) {
+void Server::SellStocks(uint64_t user_id, const UserStock& user_stock,
+                                    std::function<void(ResultType<void>&)>& callback) {
 
     boost::asio::post(pool_, 
-        [callback, server = shared_from_this(), user_id, stock_id, count](){
+        [callback, server = shared_from_this(), user_id, user_stock](){
 
-            auto result_stock = server->stock_service_->GetStock(stock_id);
+            auto result_stock = server->stock_service_->GetStock(user_stock.stock_id_);
             if (!result_stock.IsSuccess()) {
-                auto error = ResultType<uint64_t>(result_stock.GetError());
+                auto error = ResultType<void>(result_stock.GetError());
                 callback(error);
                 return;
             }
-            
             auto cost = result_stock.GetResult().cost_;
 
-            auto result = server->stock_service_->SellStocks(stock_id, count);
-            if (!result.IsSuccess()) {
-                auto error = ResultType<uint64_t>(result_stock.GetError());
-                callback(error);
-            }
-
-            auto res = server->user_service_->SellStocks(user_id, stock_id, count, cost);
-            callback(res);
+            auto result = server->user_stock_service_->UserSellStock(user_stock.count_ * cost, user_id, user_stock);
+            callback(result);
         }
     );
 
 }
 
-void Server::Register(User& user, std::function<void(ResultType<User>&)>& callback) {
+void Server::Register(User& user, std::function<void(ResultType<uint64_t>&)>& callback) {
 
     boost::asio::post(pool_,
         [callback, server = shared_from_this(), &user] {
@@ -118,23 +109,23 @@ void Server::Register(User& user, std::function<void(ResultType<User>&)>& callba
 
 }
 
-void Server::Login(User& user, std::function<void(ResultType<User>& user)>& callback) {
+void Server::Login(std::string_view email, std::string_view password, std::function<void(ResultType<User>& user)>& callback) {
 
     boost::asio::post(pool_,
-        [callback, server = shared_from_this(), &user] {
-            auto auth_user = server->user_service_->LoginUser(user);
+        [callback, server = shared_from_this(), email, password] {
+            auto auth_user = server->user_service_->LoginUser(email, password);
             callback(auth_user);
         }
     );
 
 }
 
-void Server::ChangePassword(uint64_t user_id, const std::string &password, std::function<void()>& callback){
+void Server::ChangePassword(uint64_t user_id, std::string_view password, std::function<void(ResultType<void>&)>& callback){
 
     boost::asio::post(pool_,
-        [callback, server = shared_from_this(), user_id, &password]{
-            server->user_service_->ChangePassword(user_id, password);
-            callback();
+        [callback, server = shared_from_this(), user_id, password]{
+            auto result = server->user_service_->ChangePassword(user_id, password);
+            callback(result);
         }
     );
 
@@ -143,21 +134,24 @@ void Server::ChangePassword(uint64_t user_id, const std::string &password, std::
 void Server::ListUsersStock(uint64_t user_id, std::function<void(ResultType<std::vector<Stock>>)>& callback) {
     boost::asio::post(pool_, 
         [callback, server = shared_from_this(), user_id](){
-            auto result = server->user_service_->ListUsersStock(user_id);
-            if (!result.IsSuccess()){
-                ResultType<std::vector<Stock>> res(result.GetError());
+            auto result_id = server->user_stock_service_->GetUserStock(user_id);
+            if (!result_id.IsSuccess()){
+                ResultType<std::vector<Stock>> res(result_id.GetError());
                 callback(res);
                 return;
             }
+
+            auto stock_id = result_id.GetResult();
             std::vector<Stock> stocks;
-            for (auto& [id, cnt] : result.GetResult()) {
-                auto cur_stock = server->stock_service_->GetStock(id);
+
+            for (auto& cur : stock_id) {
+                auto cur_stock = server->stock_service_->GetStock(cur.stock_id_);
                 if (!cur_stock.IsSuccess()) {
                     callback(ResultType(stocks));
                     return;
                 }
                 stocks.emplace_back(cur_stock.GetResult());
-                stocks.back().count_ = cnt;
+                stocks.back().count_ = cur.count_;
             }
             callback(ResultType(stocks));
         }

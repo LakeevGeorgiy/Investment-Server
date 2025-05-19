@@ -16,12 +16,16 @@ add_library(${PROJECT_NAME}
     Repositories/StockRepository.cpp
     Repositories/UserRepository.h 
     Repositories/UserRepository.cpp 
+    Repositories/UserStockRepository.h 
+    Repositories/UserStockRepository.cpp
     Repositories/DatabaseConnection.h
     Repositories/DatabaseConnection.cpp 
     Services/StockService.cpp 
     Services/StockService.h 
     Services/UserService.cpp 
     Services/UserService.h
+    Services/UserStockService.h 
+    Services/UserStockService.cpp 
 )
 
 target_link_libraries(${PROJECT_NAME} 

@@ -1,32 +1,25 @@
 #pragma once
 
 #include "../../BusinessLogic/Repositories/UserRepositoryInterface.h"
+#include "DatabaseConnection.h"
 
 class UserRepository : public UserRepositoryInterface {
-public:
-
-    using pointer = std::shared_ptr<User>;
-
 private:
 
-    uint64_t counter_;
     std::shared_mutex mutex_;
-    std::unordered_map<uint64_t, pointer> users_;
+    std::unique_ptr<DatabaseConnection>& db_;
 
 public:
 
-    UserRepository();
-    UserRepository(const UserRepository& other);
-    void operator=(const UserRepository& other);
+    UserRepository(std::string_view connection_string);
+    UserRepository(const UserRepository& other) = delete;
+    UserRepository(UserRepository&& other);
+    UserRepository& operator=(const UserRepository& other) = delete;
+    UserRepository& operator=(UserRepository&& other);
 
-    User CreateUser(const User& user) override;
-    std::vector<User> ReadUsers() override;
-    User ReadUser(uint64_t id) override;
-
-    bool FindUser(uint64_t id) override;
-    bool FindUserByLogin(const std::string& username) override;
-
-    User GetUserByLogin(const std::string& username) override;
-    void UpdateUser(const User& updated_user) override;
-    void DeleteUser(uint64_t id) override;
+    ResultType<uint64_t> CreateUser(const User& user) override;
+    ResultType<User> ReadUser(uint64_t id) override;
+    ResultType<User> LoginUser(std::string_view email, std::string_view password) override;
+    ResultType<void> UpdateUser(const User& user) override;
+    ResultType<void> DeleteUser(uint64_t id) override;
 };

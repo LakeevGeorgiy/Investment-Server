@@ -1,29 +1,25 @@
 #pragma once
 
+#include "../../BusinessLogic/Repositories/UserRepositoryInterface.h"
 #include "../../BusinessLogic/Services/UserServiceInterface.h"
 
 class UserService : public UserServiceInterface {
-public:
-
-    template <typename T>
-    using pointer = std::shared_ptr<T>;
-
 private:
 
-    pointer<UserRepositoryInterface> user_repository_;
+    std::shared_ptr<UserRepositoryInterface>& repository_;
 
 public:
 
-    UserService(pointer<UserRepositoryInterface>& user_repository);
-    UserService(const UserService& other);
-    void operator=(const UserService& other);
+    UserService(std::shared_ptr<UserRepositoryInterface>& repository);
+    UserService(const UserService& other) = delete;
+    UserService(UserService&& other);
+    UserService& operator=(const UserService& other) = delete;
+    UserService& operator=(UserService&& other);
+    ~UserService() = default;
 
-    ResultType<User> GetUser(uint64_t user_id) override;
-    ResultType<uint64_t> BuyStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, uint64_t cost) override;
-    ResultType<uint64_t> SellStocks(uint64_t user_id, uint64_t stock_id, uint32_t count, uint64_t cost) override;
-    ResultType<User> CreateNewUser(const User& user) override;
-    ResultType<User> LoginUser(User& user) override;
-    void ChangePassword(uint64_t user_id, const std::string& password) override;
-    ResultType<std::vector<std::pair<uint64_t, uint32_t>>> ListUsersStock(uint64_t user_id) override;
+    ResultType<User> GetUser(uint64_t id) override;
+    ResultType<uint64_t> CreateNewUser(const User& user) override;
+    ResultType<User> LoginUser(std::string_view email, std::string_view password) override;
+    ResultType<void> ChangePassword(uint64_t id, std::string_view password) override;
     
 };

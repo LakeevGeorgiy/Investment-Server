@@ -4,15 +4,15 @@
 #include <iostream>
 
 #include "../Models/Stock.h"
+#include "../Models/ResultType.h"
 
 class StockRepositoryInterface {
 public:
 
-    virtual void CreateStock(const Stock& new_stock) = 0;
-    virtual std::vector<Stock> ReadStocks() = 0;
-    virtual Stock ReadStock(uint64_t id) = 0;
-    virtual bool FindStock(uint64_t id) = 0;
-    virtual void UpdateStock(const Stock& updated_stock) = 0;
-    virtual void DeleteStock(uint64_t id) = 0;
-
+    virtual ResultType<uint64_t> CreateStock(const Stock& stock) = 0;
+    virtual ResultType<std::vector<Stock>> ReadStocks() = 0;
+    virtual ResultType<Stock> ReadStock(uint64_t id) = 0;
+    virtual ResultType<void> UpdateStock(const Stock& stock) = 0;
+    virtual ResultType<void> DeleteStock(uint64_t id) = 0;
+    virtual ~StockRepositoryInterface() = default;
 };

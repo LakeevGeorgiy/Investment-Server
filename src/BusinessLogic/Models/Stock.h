@@ -13,7 +13,7 @@ public:
 
 public:
 
-    Stock(uint64_t id, uint32_t cost, uint32_t count, const std::string& company_name);
+    Stock(uint64_t id, uint32_t cost, uint32_t count, std::string_view company_name);
 
     Stock(const Stock& other);
 

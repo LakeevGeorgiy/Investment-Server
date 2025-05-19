@@ -15,7 +15,7 @@ std::unique_ptr<DatabaseConnection>& DatabaseConnection::GetInstance(std::string
     return DatabaseConnection::db_;
 }
 
-pqxx::result DatabaseConnection::ExecQuery(std::string query, const pqxx::params& params){
+pqxx::result DatabaseConnection::ExecQuery(std::string_view query, const pqxx::params& params){
     pqxx::work transaction(conn_);
     pqxx::result r = transaction.exec(query, params);
     transaction.commit();
